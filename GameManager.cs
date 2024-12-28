@@ -7,46 +7,71 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     public GameObject[] moles; // Array of moles
+    public GameObject startScreen;
+    public GameObject endScreen_l;
+    public GameObject endScreen_w;
     public TMP_Text scoreText;
     public TMP_Text timerText;
     public float popUpDuration = 100f;
     public float moveSpeed = 1f;
     public float intervalBetweenMoles = 3f;
-    public float gameDuration = 60f; // Game duration in seconds
+    public float gameDuration = 120f; // Game duration in seconds
 
     private int score = 0;
     private float remainingTime;
 
-    private void Start()
+    // private void Start()
 
 
+    // {
+    //     remainingTime = gameDuration;
+    //     StartCoroutine(ActivateRandomMoles());
+    //     StartCoroutine(GameTimer());
+    //     UpdateScoreText();
+    // }
+        private void Start()
     {
+        // Show the start screen at the beginning
+        startScreen.SetActive(true);
+        endScreen_w.SetActive(false); // Hide the end screen
+        endScreen_l.SetActive(false); // Hide the end screen
+    }
+
+    public void StartGame()
+    {
+        // Initialize game variables
         remainingTime = gameDuration;
+        score = 0;
+        UpdateScoreText();
+
+        // Start coroutines for the game
         StartCoroutine(ActivateRandomMoles());
         StartCoroutine(GameTimer());
-        UpdateScoreText();
     }
+
 
     private IEnumerator ActivateRandomMoles()
+{
+    while (remainingTime > 0)
     {
-        while (remainingTime > 0)
-        {
-            int randomIndex = UnityEngine.Random.Range(0, moles.Length);
-            MoleBehavior mole = moles[randomIndex].GetComponent<MoleBehavior>();
-            mole.PopUp(moveSpeed, popUpDuration);
+        int randomIndex = UnityEngine.Random.Range(0, moles.Length);
+        MoleBehavior mole = moles[randomIndex].GetComponent<MoleBehavior>();
 
-            // Listen for mole hits
-            mole.OnMissed += ResetScore; // Reset score if missed
-            mole.OnHit += IncrementScore; // Increment score if hit
+        // Subscribe to the hit event
+        mole.OnHit += IncrementScore;
 
-            //yield return new WaitForSeconds(intervalBetweenMoles);
-            yield return new WaitForSeconds(3);
+        // Activate the mole
+        mole.PopUp(moveSpeed, popUpDuration);
 
-            // Stop listening to mole after its cycle
-            mole.OnMissed -= ResetScore;
-            mole.OnHit -= IncrementScore;
-        }
+        // Wait for the mole's cycle to finish
+        // Debug.Log("H1");
+        yield return new WaitForSeconds(1);
+        // Debug.Log("H2");
+
+        // Unsubscribe from the hit event
+        mole.OnHit -= IncrementScore;
     }
+}
 
     private void IncrementScore()
     {
@@ -54,11 +79,11 @@ public class GameManager : MonoBehaviour
         UpdateScoreText();
     }
 
-    private void ResetScore()
-    {
-        score = 0;
-        UpdateScoreText();
-    }
+    // private void ResetScore()
+    // {
+    //     score = 0;
+    //     UpdateScoreText();
+    // }
 
     private void UpdateScoreText()
     {
@@ -69,7 +94,6 @@ public class GameManager : MonoBehaviour
     {
         while (remainingTime > 0)
         {
-            
             timerText.text = "Time: " + Mathf.CeilToInt(remainingTime) + "s";
             yield return new WaitForSeconds(1f);
             remainingTime--;
@@ -83,5 +107,8 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over! Final Score: " + score);
         timerText.text = "Time: 0s";
         StopAllCoroutines();
+        if(score>20) endScreen_w.SetActive(true);
+        else endScreen_l.SetActive(false); // Hide the end screen
+
     }
 }

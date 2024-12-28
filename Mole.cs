@@ -23,46 +23,63 @@ public class MoleBehavior : MonoBehaviour
         if (isActive) return;
         StartCoroutine(PopUpRoutine(moveSpeed, activeDuration));
     }
+    private IEnumerator Move(int direction, float moveSpeed)
+{
+    Vector3 startPosition = transform.localPosition; // Current position
+    Vector3 targetPosition = direction == 1 ? upPosition : downPosition; // Determine direction
+    float time = 0;
+    float duration = 1f / moveSpeed; // Duration of the movement
+
+    while (time < duration)
+    {
+        transform.localPosition = Vector3.Lerp(startPosition, targetPosition, time / duration);
+        time += Time.deltaTime;
+        yield return null;
+    }
+    transform.localPosition = targetPosition; // Ensure exact final position
+}
+
+    
 
     private IEnumerator PopUpRoutine(float moveSpeed, float activeDuration)
-    {   Debug.Log("coming out");
+
+    {   
+         Debug.Log("coming out");
         isActive = true;
         hit=false;
-        // Move up
-        float time = 0;
-        while (time < 1)
-        {
-            transform.localPosition = Vector3.Lerp(downPosition, upPosition, time);
-            time += Time.deltaTime * moveSpeed;
-            yield return null;
-        }
+        yield return StartCoroutine(Move(1, moveSpeed)); 
         transform.localPosition = upPosition;
 
         // Wait for active duration
-        Debug.Log(activeDuration);
-        yield return new WaitForSeconds(10000000);
+        float elapsedTime = 0f;
+        while (elapsedTime < activeDuration && !hit)
+        {
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait for the next frame
+        }
+        yield return StartCoroutine(Move(0, moveSpeed));
+        // Check if the mole was not hit within the active duration
 
         // Miss logic: If mole wasn't hit in time
         //if (isActive && OnMissed != null)
         
 
         // Move down
-        time = 0;
-        while (time < 1)
-        {
-            transform.localPosition = Vector3.Lerp(upPosition, downPosition, time);
-            time += Time.deltaTime * moveSpeed;
-            yield return null;
-        }
+       
         transform.localPosition = downPosition;
-        if (!hit)
-        {
-            Debug.Log("MISSED BABY");
-            OnMissed.Invoke();
-        }
+
+        // if (!hit)
+        // {
+        //     Debug.Log("MISSED BABY");
+        //     OnMissed.Invoke();
+        // }
+        yield return new WaitForSeconds(4);
         isActive = false;
     }
-
+    private IEnumerator wait_boss(){
+         yield return new WaitForSeconds(4);
+         isActive=false;
+    }
     private void OnMouseDown()
     {
         if (isActive && OnHit != null)
@@ -70,9 +87,9 @@ public class MoleBehavior : MonoBehaviour
             Debug.Log("HIT BABY!");
             OnHit.Invoke(); // Trigger hit event
             hit=true;
-            isActive = false; // Prevent multiple hits
+
+           wait_boss();
+
         }
     }
 }
-
- 
